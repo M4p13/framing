@@ -43,11 +43,12 @@ type AppIdentity struct {
 	AppDomain   string //<Location>
 }
 
-func NewAppIdentity(name string, description string) AppIdentity {
+func NewAppIdentity(appdomain string, name string, description string) AppIdentity {
 	uuid := uuid.New()
 	return AppIdentity{
 		Name:        name,
 		Description: name,
+		AppDomain:   appdomain,
 		UUID:        uuid,
 	}
 }
