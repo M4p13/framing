@@ -2,8 +2,10 @@ package framing
 
 import (
 	"context"
+	"fmt"
 	"log"
 
+	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
@@ -16,6 +18,46 @@ type JetstreamConsumer struct {
 	Durable    string
 	Handler    []func(msgBody []byte)
 	Middleware []Middleware
+}
+
+type NatsManager struct {
+	nc               *nats.Conn
+	JetstreamManager *JetstreamManager
+	AppIdentity      AppIdentity
+}
+
+func (n *NatsManager) GetAppId() string {
+	return fmt.Sprintf("%s-%s", n.AppIdentity.Name, n.AppIdentity.UUID.String())
+}
+
+func (n *NatsManager) Write(p []byte) (int, error) {
+	topic := fmt.Sprintf("%s.system.application.%s", n.AppIdentity.AppDomain, n.GetAppId())
+	n.nc.Publish(topic, p)
+	return len(p), nil
+}
+
+type AppIdentity struct {
+	Name        string
+	Description string
+	UUID        uuid.UUID
+	AppDomain   string //<Location>
+}
+
+func NewAppIdentity(name string, description string) AppIdentity {
+	uuid := uuid.New()
+	return AppIdentity{
+		Name:        name,
+		Description: name,
+		UUID:        uuid,
+	}
+}
+
+func NewNatsManager(nc *nats.Conn, ai AppIdentity) *NatsManager {
+	return &NatsManager{
+		nc:               nc,
+		JetstreamManager: NewJetstreamManager(nc),
+		AppIdentity:      ai,
+	}
 }
 
 type JetstreamManager struct {
