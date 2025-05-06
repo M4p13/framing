@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
@@ -30,9 +31,13 @@ func (n *NatsManager) GetAppId() string {
 	return fmt.Sprintf("%s-%s", n.AppIdentity.Name, n.AppIdentity.UUID.String())
 }
 
+func (n *NatsManager) GetAppTopic() string {
+	return fmt.Sprintf("%s.system.application.%s", n.AppIdentity.AppDomain, n.GetAppId())
+}
+
 func (n *NatsManager) Write(p []byte) (int, error) {
-	topic := fmt.Sprintf("%s.system.application.%s", n.AppIdentity.AppDomain, n.GetAppId())
-	n.nc.Publish(topic, p)
+	topic := n.GetAppTopic()
+	n.nc.Publish(topic+".log", p)
 	return len(p), nil
 }
 
@@ -40,7 +45,7 @@ type AppIdentity struct {
 	Name        string
 	Description string
 	UUID        uuid.UUID
-	AppDomain   string //<Location>
+	AppDomain   string
 }
 
 func NewAppIdentity(appdomain string, name string, description string) AppIdentity {
@@ -59,6 +64,16 @@ func NewNatsManager(nc *nats.Conn, ai AppIdentity) *NatsManager {
 		JetstreamManager: NewJetstreamManager(nc),
 		AppIdentity:      ai,
 	}
+}
+
+func (n *NatsManager) StartAlive() {
+	topic := n.GetAppTopic()
+	go func() {
+		for {
+			time.Sleep(time.Second * 3)
+			n.nc.Publish(topic+".alive", []byte{1})
+		}
+	}()
 }
 
 type JetstreamManager struct {
