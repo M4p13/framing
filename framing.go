@@ -28,7 +28,7 @@ type NatsManager struct {
 }
 
 func (n *NatsManager) GetAppId() string {
-	return fmt.Sprintf("%s-%s", n.AppIdentity.Name, n.AppIdentity.UUID.String())
+	return fmt.Sprintf("%s.%s", n.AppIdentity.Name, n.AppIdentity.UUID.String())
 }
 
 func (n *NatsManager) GetAppTopic() string {
