@@ -47,14 +47,14 @@ type Subscriber interface {
 }
 
 type SubManager struct {
-	Subscriber []*Subscriber
+	Subscriber []Subscriber
 	middleware []NatsMiddleware
 	nc         *nats.Conn
 }
 
 func NewSubManager(nc *nats.Conn) *SubManager {
 	return &SubManager{
-		Subscriber: []*Subscriber{},
+		Subscriber: []Subscriber{},
 		middleware: []NatsMiddleware{},
 		nc:         nc,
 	}
@@ -78,12 +78,11 @@ func (sm *SubManager) applyMiddleware(handler func(msg *nats.Msg), consumerMiddl
 	return h
 }
 
-func (sm *SubManager) RegisterHandle(sub *Subscriber) error {
-	s := *sub
+func (sm *SubManager) RegisterHandle(sub Subscriber) error {
 	sm.Subscriber = append(sm.Subscriber, sub)
-	topic := s.GetTopic()
-	mw := s.GetMiddleware()
-	for _, h := range s.GetHandlers() {
+	topic := sub.GetTopic()
+	mw := sub.GetMiddleware()
+	for _, h := range sub.GetHandlers() {
 		wrappedHandler := sm.applyMiddleware(h, mw)
 		sm.nc.Subscribe(topic, wrappedHandler)
 	}
