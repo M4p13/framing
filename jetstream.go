@@ -69,6 +69,7 @@ func (jsm *JetstreamManager) RegisterHandle(jc *JetstreamConsumer) error {
 	if err != nil {
 		return err
 	}
+	//bad
 	js.DeleteConsumer(context.Background(), jc.Stream, jc.Durable)
 	c, err := js.CreateOrUpdateConsumer(context.Background(), jc.Stream, jetstream.ConsumerConfig{
 		Durable: jc.Durable,

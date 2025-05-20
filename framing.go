@@ -18,6 +18,7 @@ type NatsManager struct {
 	JetstreamManager *JetstreamManager
 	SubManager       *SubManager
 	AppIdentity      AppIdentity
+	Test             bool
 }
 
 func (n *NatsManager) GetAppId() string {
@@ -34,20 +35,21 @@ func (n *NatsManager) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func NewNatsManager(nc *nats.Conn, ai AppIdentity) *NatsManager {
+func NewNatsManager(nc *nats.Conn, ai AppIdentity, testingMode bool) *NatsManager {
 	return &NatsManager{
 		nc:               nc,
 		JetstreamManager: NewJetstreamManager(nc),
 		SubManager:       NewSubManager(nc),
 		AppIdentity:      ai,
+		Test:             testingMode,
 	}
 }
 
-func (n *NatsManager) StartAlive() {
+func (n *NatsManager) StartAlive(t time.Duration) {
 	topic := n.GetAppTopic()
 	go func() {
 		for {
-			time.Sleep(time.Second * 3)
+			time.Sleep(t)
 			n.nc.Publish(topic+".alive", []byte{1})
 		}
 	}()
